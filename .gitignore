@@ -3,3 +3,4 @@ private.mk
 include/microapp_symbols.ld
 include/microapp_header_symbols.ld
 __pycache__/
+.vscode/
