@@ -10,96 +10,75 @@ extern "C" {
 #warning "Incorrect uintptr_t type"
 #endif
 
-// location of these variables is defined in linker script
-extern unsigned __etext;
-extern unsigned __data_start__;
-extern unsigned __data_end__;
-
-// initialize .data, can be moved to assembly later
-void copy_data() {
-	unsigned *src = &__etext;
-	unsigned *dst = &__data_start__;
-	while (dst < &__data_end__) {
-		*dst++ = *src++;
+/*
+ * Implementation sends a message under the hood. The microapp itself is reponsible for looping for long enough.
+ * A tick takes 100 ms. Hence the loop should be the delay in ms divided by 100.
+ */
+void delay(uint32_t delay_ms) {
+	const uint8_t bluenet_ticks = 100;
+	uint32_t ticks = delay_ms / bluenet_ticks;
+	for (uint32_t i = 0; i < ticks; i++) {
+		uint8_t *payload = getOutgoingMessagePayload();
+//		io_buffer_t *buffer = getOutgoingMessageBuffer();
+		microapp_delay_cmd_t *delay_cmd = (microapp_delay_cmd_t*)(payload);
+		delay_cmd->header.cmd = CS_MICROAPP_COMMAND_DELAY;
+		delay_cmd->period = ticks;
+		sendMessage();
 	}
 }
 
-void* _coroutine_args;
-
-void goyield(uint16_t prefix) {
-
-	microapp_delay_cmd_t *delay_cmd = (microapp_delay_cmd_t*)&global_msg;
-
-	delay_cmd->cmd = CS_MICROAPP_COMMAND_DELAY;
-	delay_cmd->period = prefix;
-	delay_cmd->coargs = (uintptr_t)_coroutine_args;
-
-	global_msg.length = sizeof(microapp_delay_cmd_t);
-
-	sendMessage(&global_msg);
+void signalSetupEnd() {
+	uint8_t *payload = getOutgoingMessagePayload();
+	//io_buffer_t *buffer = getOutgoingMessageBuffer();
+	microapp_cmd_t *cmd = (microapp_cmd_t*)(payload);
+	cmd->cmd = CS_MICROAPP_COMMAND_SETUP_END;
+	cmd->interruptCmd = CS_MICROAPP_COMMAND_NONE;
+	sendMessage();
 }
 
-void delay(uint16_t delay_ms) {
-	goyield(delay_ms);
-}
-
-/*
- * We wrap loop() to store the coroutine arguments and be able to pass it back to the caller in e.g. the delay
- * function.
- */
-void coloop(void *p) {
-	_coroutine_args = p;
-	loop();
+void signalLoopEnd() {
+	uint8_t *payload = getOutgoingMessagePayload();
+	//io_buffer_t *buffer = getOutgoingMessageBuffer();
+	microapp_cmd_t *cmd = (microapp_cmd_t*)(payload);
+	cmd->cmd = CS_MICROAPP_COMMAND_LOOP_END;
+	sendMessage();
 }
 
 /*
- * We assume the following protocol
+ * This function is called from main and not directly anymore.
  *
- * [version] [setup] [coloop]
- *
- * Version is only one byte. The addresses of setup and loop are of size uniptr_t.
- * Note that you are not allowed to change the signature of those functions! 
+ * It is absolutely essential that sendMessage is called regularly. Hence this is added to the end of setup and the end
+ * of each loop call though signalSetupEnd() and signalLoopEnd();
+ * If this is not done the coroutine finishes and bluenet will crash.
  */
 int __attribute__((optimize("O0"))) dummy_main() {
-	copy_data();
-
-	uint8_t buf[BLUENET_IPC_RAM_DATA_ITEM_SIZE];
-
-	// protocol version
-	const char protocol_version = 0;
-	buf[0] = protocol_version;
-	uint8_t len = 1;
-
-	// address of setup() function
-	uintptr_t address = (uintptr_t)&setup;
-	for (uint16_t i = 0; i < sizeof(uintptr_t); ++i) {
-		buf[i+len] = (uint8_t)(0xFF & (address >> (i*8)));
+	setup();
+	signalSetupEnd();
+	while(1) {
+		loop();
+		signalLoopEnd();
 	}
-	len += sizeof(uintptr_t);
+	// will not be reached
+	return -1;
+}
 
-	// address of coroutine which calls the loop() function
-	address = (uintptr_t)&coloop;
-	for (uint16_t i = 0; i < sizeof(uintptr_t); ++i) {
-		buf[i+len] = (uint8_t)(0xFF & (address >> (i*8)));
-	}
-	len += sizeof(uintptr_t);
+/*
+ * We will just pass through to dummy_main. Let's keep this function in case we want to jump to it in a later stage.
+ */
+int main() {
+	dummy_main();
+	// will not be reached
+	return -1;
+}
 
-	// set buffer in RAM
-	setRamData(IPC_INDEX_MICROAPP, buf, len);
-
-	return (int)&setup;
+/*
+ * We will enter from the Reset_Handler. This is the very first instruction as defined in the assembly file startup.S.
+ */
+__attribute__((weak)) void _start(void){
+	main();
 }
 
 #ifdef __cplusplus
 }
 #endif
-
-/**
- * We actually do not "use" the main function. The bluenet code will immmediately jump to dummy_main. The function 
- * also does not need to return. This function exists just to make the compiler happy.
- */
-int main(int argc, char *argv[]) {
-	dummy_main();
-	return -1;
-}
 

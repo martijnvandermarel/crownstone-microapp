@@ -1,14 +1,24 @@
+#pragma once
+
 #include <Serial.h>
 #include <microapp.h>
 #include <BleUtils.h>
 #include <BleDevice.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#include <microapp.h>
+
+// Create shortened typedefs (we are within microapp scope here)
+
 // Types of BLE event for which event handlers can be set
-enum BleEventType {
-	BleEventDeviceScanned,
-	BleEventConnected,
-	BleEventDisconnected
-};
+typedef MicroappBleEventType BleEventType;
+
+#ifdef __cplusplus
+}
+#endif
 
 // Types of filters which can be used to filter scanned BLE devices
 enum BleFilterType {
@@ -21,10 +31,19 @@ enum BleFilterType {
 // Stores the filter for filtering scanned BLE devices
 struct BleFilter {
 	BleFilterType type; // defines which property is currently being filtered on
-	MACaddress address;
+	MacAddress address;
 	char name[MAX_BLE_ADV_DATA_LENGTH]; // max length of name equals max advertisement length
 	uint16_t len; // length of the name field
 	uuid16_t uuid; // service data uuid
+};
+
+typedef void (*BleEventHandler)(BleDevice);
+
+// Context for the callback that can be kept local.
+struct BleSoftInterruptContext {
+	BleEventHandler eventHandler;
+	bool filled;
+	uint8_t id;
 };
 
 /**
@@ -34,30 +53,23 @@ struct BleFilter {
  */
 class Ble {
 private:
-	Ble(){};
+	Ble();
 
-	BleDevice _bleDevice;
+	BleDevice _activeDevice;
 
 	BleFilter _activeFilter;
 
 	bool _isScanning = false;
 
-	uintptr_t _scannedDeviceCallback;
-
-	/*
-	 * Add handleScanEventWrapper as a friend so it can access private function handleScanEvent of Ble
-	 */
-	friend void handleScanEventWrapper(microapp_ble_device_t device);
-
-	/*
-	 * Handler for scanned devices. Called from bluenet via handleScanEventWrapper upon scanned device events if scanning
-	 */
-	void handleScanEvent(microapp_ble_device_t device);
-
 	/*
 	 * Compares the scanned device device against the filter and returns true upon a match
 	 */
-	bool filterScanEvent(BleDevice device);
+	bool filterScanEvent(BleDevice rawDevice);
+
+	/*
+	 * Store callback contexts.
+	 */
+	BleSoftInterruptContext _bleSoftInterruptContext[MAX_SOFT_INTERRUPTS];
 
 public:
 
@@ -119,8 +131,16 @@ public:
 	/**
 	 * Sends command to bluenet to stop calling registered microapp callback function upon receiving advertisements
 	 */
-	void stopScan();
+	bool stopScan();
 
+	/**
+	 * Returns last scanned device which matched the filter
+	 *
+	 * @return                  BleDevice object representing the discovered device
+	 */
+	BleDevice available();
+
+protected:
 	/**
 	 * Get the currently set filter for scanned devices
 	 *

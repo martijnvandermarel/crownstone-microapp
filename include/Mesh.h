@@ -12,7 +12,11 @@ public:
 	 * @param[in] stoneId     ID of the Crownstone to send the message to, or 0 to send it to every Crownstone.
 	 */
 	void sendMeshMsg(uint8_t* msg, uint8_t msgSize, uint8_t stoneId);
+<<<<<<< HEAD
 
+=======
+	
+>>>>>>> master
 	/**
 	 * Read a mesh message.
 	 *
@@ -28,4 +32,8 @@ public:
 	 * @return                True if new message available, False if not.
 	 */
 	bool available();
+<<<<<<< HEAD
 };
+=======
+};
+>>>>>>> master

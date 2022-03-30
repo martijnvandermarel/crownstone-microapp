@@ -25,7 +25,7 @@ void loop();
 //
 // A delay in ms. Hence 1000 means a delay of one second.
 //
-void delay(uint16_t delay_ms);
+void delay(uint32_t delay_ms);
 
 //
 // A bunch of functions that are mainly useful in either development mode, on a Crownstone that is embedded
@@ -62,7 +62,7 @@ void analogWrite(uint8_t pin, int val);
 // @param isr      The interrupt service routine to call
 // @param mode     The options are LOW, CHANGE, RISING, FALLING, and HIGH.
 //
-void attachInterrupt(uint8_t pin, void (*isr)(void), uint8_t mode);
+int attachInterrupt(uint8_t pin, void (*isr)(void), uint8_t mode);
 
 //
 // Mapping from digital pins to interrupts. This will be just the same for Crownstone hardware. Any mapping will be
