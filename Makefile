@@ -26,10 +26,6 @@ init: $(TARGET_CONFIG_FILE)
 	@mkdir -p $(BUILD_PATH)
 	@rm -f include/microapp_header_symbols.ld
 
-<<<<<<< HEAD
-$(TARGET).elf.tmp: src/main.c src/microapp.c src/Arduino.c src/Wire.cpp src/Serial.cpp src/ArduinoBLE.cpp src/BleUtils.cpp src/BleDevice.cpp src/Mesh.cpp $(SHARED_PATH)/ipc/cs_IpcRamData.c $(TARGET).c
-	@echo "Compile without firmware header"
-=======
 .PHONY:
 include/microapp_header_symbols.ld: $(TARGET).bin.tmp
 	@echo "Use python script to generate $@ file with valid header symbols"
@@ -38,7 +34,6 @@ include/microapp_header_symbols.ld: $(TARGET).bin.tmp
 .PHONY:
 include/microapp_header_dummy_symbols.ld:
 	@echo "Use python script to generate file with dummy values"
->>>>>>> master
 	@scripts/microapp_make.py include/microapp_header_symbols.ld
 
 include/microapp_target_symbols.ld: $(TARGET_CONFIG_FILE)
@@ -61,15 +56,11 @@ $(TARGET).elf.tmp: $(SOURCE_FILES)
 	@echo "Compile without firmware header"
 	@$(CC) $(FLAGS) $^ -I$(SHARED_PATH) -Iinclude -Linclude -Tgeneric_gcc_nrf52.ld -o $@
 
-<<<<<<< HEAD
-$(TARGET).elf: src/main.c src/microapp.c src/Arduino.c src/Wire.cpp src/Serial.cpp src/ArduinoBLE.cpp src/BleUtils.cpp src/BleDevice.cpp src/Mesh.cpp $(SHARED_PATH)/ipc/cs_IpcRamData.c $(TARGET).c include/microapp_header_symbols.ld
-=======
 .ALWAYS:
 $(TARGET).elf.deps: include/microapp_header_symbols.ld
 	@echo "Run scripts"
 
 $(TARGET).elf: $(SOURCE_FILES)
->>>>>>> master
 	@echo "Compile with firmware header"
 	@$(CC) $(FLAGS) $^ -I$(SHARED_PATH) -Iinclude -Linclude -Tgeneric_gcc_nrf52.ld -o $@
 
