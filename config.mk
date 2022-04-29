@@ -5,10 +5,10 @@
 ###############################################################################
 
 # Path to the gcc arm none eabi compiler (do not use another one).
-GCC_PATH=$(HOME)/workspace/bluenet/tools/gcc_arm_none_eabi/bin
+GCC_PATH=$(HOME)/code/bluenet/tools/gcc_arm_none_eabi/bin
 
 # The path to the bluenet repository
-BLUENET_PATH=$(HOME)/workspace/bluenet
+BLUENET_PATH=$(HOME)/code/bluenet
 
 ###############################################################################
 # The variables following this section probably do not need to be changed.
@@ -30,12 +30,18 @@ READELF=$(GCC_PATH)/arm-none-eabi-readelf
 BUILD_PATH=build
 
 # The target name
-TARGET_NAME=basic
+TARGET_NAME=tflm_helloworld
 
-#TARGET_NAME=ble_peripheral_xiaomi_thermometer
+# Target directory
+TARGET_DIR=examples/$(TARGET_NAME)
+
+# Directories for source files, include files, and libraries
+SRC_DIR=src
+INC_DIR=include
+LIB_DIR=lib
 
 # The target source file
-TARGET_SOURCE=examples/$(TARGET_NAME).ino
+TARGET_SOURCE=$(TARGET_DIR)/$(TARGET_NAME).ino
 
 # The build target (including build directory)
 TARGET=$(BUILD_PATH)/$(TARGET_NAME)

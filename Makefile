@@ -3,14 +3,20 @@
 # This version of the Makefile does not use setup, loop, or main symbols
 
 # Adjust target config file for nrf52832 vs nrf52840
-TARGET_CONFIG_FILE=target_nrf52840.mk
-#TARGET_CONFIG_FILE=target_nrf52832.mk
+# TARGET_CONFIG_FILE=target_nrf52840.mk
+TARGET_CONFIG_FILE=target_nrf52832.mk
 
 include $(TARGET_CONFIG_FILE)
 include config.mk
 -include private.mk
 
-SOURCE_FILES=include/startup.S src/main.c src/microapp.c src/Arduino.c src/Wire.cpp src/Serial.cpp src/ArduinoBLE.cpp src/BleUtils.cpp src/BleDevice.cpp src/Mesh.cpp src/CrownstoneDimmer.cpp src/CrownstoneRelay.cpp $(SHARED_PATH)/ipc/cs_IpcRamData.c $(TARGET).c
+SOURCE_FILES=	$(INC_DIR)/startup.S \
+				$(wildcard $(SRC_DIR)/*.c) \
+				$(wildcard $(SRC_DIR)/*.cpp) \
+				$(wildcard $(TARGET_DIR)/*.c) \
+				$(wildcard $(TARGET_DIR)/*.cpp) \
+				$(SHARED_PATH)/ipc/cs_IpcRamData.c \
+				$(TARGET).c
 
 # First initialize, then create .hex file, then .bin file and file end with info
 all: init $(TARGET).hex $(TARGET).bin $(TARGET).info
@@ -24,23 +30,23 @@ init: $(TARGET_CONFIG_FILE)
 	@echo "Use file: $(TARGET_CONFIG_FILE)"
 	@echo 'Create build directory'
 	@mkdir -p $(BUILD_PATH)
-	@rm -f include/microapp_header_symbols.ld
+	@rm -f $(INC_DIR)/microapp_header_symbols.ld
 
 .PHONY:
-include/microapp_header_symbols.ld: $(TARGET).bin.tmp
+$(INC_DIR)/microapp_header_symbols.ld: $(TARGET).bin.tmp
 	@echo "Use python script to generate $@ file with valid header symbols"
 	@scripts/microapp_make.py -i $^ $@
 
 .PHONY:
-include/microapp_header_dummy_symbols.ld:
+$(INC_DIR)/microapp_header_dummy_symbols.ld:
 	@echo "Use python script to generate file with dummy values"
-	@scripts/microapp_make.py include/microapp_header_symbols.ld
+	@scripts/microapp_make.py $(INC_DIR)/microapp_header_symbols.ld
 
 .tmp.TARGET_CONFIG_FILE.$(TARGET_CONFIG_FILE):
 	@rm -f .tmp.TARGET_CONFIG_FILE.*
 	touch $@
 
-include/microapp_target_symbols.ld: $(TARGET_CONFIG_FILE) .tmp.TARGET_CONFIG_FILE.$(TARGET_CONFIG_FILE)
+$(INC_DIR)/microapp_target_symbols.ld: $(TARGET_CONFIG_FILE) .tmp.TARGET_CONFIG_FILE.$(TARGET_CONFIG_FILE)
 	@echo 'This script requires the presence of "bc" on the command-line'
 	@echo 'Generate target symbols (from .mk file to .ld file)'
 	@echo '/* Auto-generated file */' > $@
@@ -48,25 +54,25 @@ include/microapp_target_symbols.ld: $(TARGET_CONFIG_FILE) .tmp.TARGET_CONFIG_FIL
 	@echo '' >> $@
 	@echo "RAM_END = $(RAM_END);" >> $@
 
-include/microapp_symbols.ld: include/microapp_symbols.ld.in
+$(INC_DIR)/microapp_symbols.ld: $(INC_DIR)/microapp_symbols.ld.in
 	@echo "Generate linker symbols using C header files (using the compiler)"
-	@$(CC) -CC -E -P -x c -Iinclude $^ -o $@
+	@$(CC) -CC -E -P -x c -I$(INC_DIR) -I$(LIB_DIR) -I$(TARGET_DIR) $^ -o $@
 	@echo "File $@ now up to date"
 
-$(TARGET).elf.tmp.deps: include/microapp_header_dummy_symbols.ld include/microapp_symbols.ld include/microapp_target_symbols.ld
+$(TARGET).elf.tmp.deps: $(INC_DIR)/microapp_header_dummy_symbols.ld $(INC_DIR)/microapp_symbols.ld $(INC_DIR)/microapp_target_symbols.ld
 	@echo "Dependencies for $(TARGET).elf.tmp fulfilled"
 
 $(TARGET).elf.tmp: $(SOURCE_FILES)
 	@echo "Compile without firmware header"
-	@$(CC) $(FLAGS) $^ -I$(SHARED_PATH) -Iinclude -Linclude -Tgeneric_gcc_nrf52.ld -o $@
+	@$(CC) $(FLAGS) $^ -I$(SHARED_PATH) -I$(INC_DIR) -I$(TARGET_DIR) -I$(LIB_DIR) -L$(INC_DIR) -Tgeneric_gcc_nrf52.ld -o $@
 
 .ALWAYS:
-$(TARGET).elf.deps: include/microapp_header_symbols.ld
+$(TARGET).elf.deps: $(INC_DIR)/microapp_header_symbols.ld
 	@echo "Run scripts"
 
 $(TARGET).elf: $(SOURCE_FILES)
 	@echo "Compile with firmware header"
-	@$(CC) $(FLAGS) $^ -I$(SHARED_PATH) -Iinclude -Linclude -Tgeneric_gcc_nrf52.ld -o $@
+	@$(CC) $(FLAGS) $^ -I$(SHARED_PATH) -I$(INC_DIR) -I$(TARGET_DIR) -I$(LIB_DIR) -I$(TARGET_DIR) -L$(INC_DIR) -Tgeneric_gcc_nrf52.ld -o $@
 
 $(TARGET).c: $(TARGET_SOURCE)
 	@echo "Script from .ino file to .c file (just adding Arduino.h header)"
@@ -86,7 +92,7 @@ $(TARGET).bin: $(TARGET).elf
 	@$(OBJCOPY) -O binary $(TARGET).elf $@
 
 $(TARGET).info:
-	@echo "$(shell cat include/microapp_header_symbols.ld)"
+	@echo "$(shell cat $(INC_DIR)/microapp_header_symbols.ld)"
 
 flash: all
 	echo nrfjprog -f nrf52 --program $(TARGET).hex --sectorerase
@@ -138,3 +144,6 @@ help:
 .PHONY: flash inspect help read reset erase all
 
 .SILENT: all init flash inspect size help read reset erase clean
+
+print: $(wildcard $(LIB_DIR)/*.h)
+	@ls $?
