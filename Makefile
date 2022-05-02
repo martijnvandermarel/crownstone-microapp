@@ -145,5 +145,6 @@ help:
 
 .SILENT: all init flash inspect size help read reset erase clean
 
-print: $(wildcard $(LIB_DIR)/*.h)
+print: $(wildcard $(TARGET_DIR)/*.cpp)
+	@echo "print .c files in $(TARGET_DIR):"
 	@ls $?
