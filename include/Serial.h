@@ -1,7 +1,9 @@
 #pragma once
 
-#include <String.h>
 #include <stdint.h>
+#include <cstring>
+
+#include <String.h>
 #include <cs_MicroappStructs.h>
 
 class SerialBase_ {
@@ -28,14 +30,14 @@ public:
 	int write(int value);
 
 	int write(unsigned int value);
-	
+
 	// Write a string (as char array) to serial. The length will be obtained through searching for a null
 	// byte.
 	// Returns number of bytes written.
 	int write(const char *str);
 
 	// Write to serial. For now this becomes logs in the Crownstone firmware. That is not so useful to the
-	// microapp person though. To send it through to UART for a USB dongle is quite limited, for normal 
+	// microapp person though. To send it through to UART for a USB dongle is quite limited, for normal
 	// Crownstones it is almost useless. It would be fun to write over Bluetooth RFCOMM.
 	//
 	// Returns number of bytes written.

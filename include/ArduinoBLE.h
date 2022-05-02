@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cstring>
+
 #include <Serial.h>
 #include <microapp.h>
 #include <BleUtils.h>

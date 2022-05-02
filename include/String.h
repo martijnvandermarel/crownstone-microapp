@@ -1,6 +1,7 @@
 #pragma once
 
 #include <microapp.h>
+#include <cstring>
 
 class String {
 

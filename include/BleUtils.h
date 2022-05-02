@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cstring>
+
 #include <microapp.h>
 #include <String.h>
 

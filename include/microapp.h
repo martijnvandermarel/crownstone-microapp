@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cstring>
+
 // Get defaults from bluenet
 #include <cs_MicroappStructs.h>
 
@@ -60,7 +62,7 @@ const uint8_t HIGH = !LOW;
 #define NUMBER_OF_PINS 18
 
 // define size_t as a 16-bit unsigned int
-typedef uint16_t size_t;
+// typedef uint16_t size_t;
 
 // set a max string size which is equal to the max payload of microapp_message_t
 const size_t MAX_STRING_SIZE = MAX_PAYLOAD;
@@ -72,7 +74,7 @@ const size_t MAX_STRING_SIZE = MAX_PAYLOAD;
  *
  * @return           length of the string
  */
-uint8_t strlen(const char *str);
+// uint8_t strlen(const char *str);
 
 /**
  * Compares the first num bytes of ptr1 and ptr2
@@ -87,7 +89,7 @@ uint8_t strlen(const char *str);
  * @return 1         if for the first unmatching byte i we have ptr1[i] >
  * ptr2[i]
  */
-int memcmp(const void *ptr1, const void *ptr2, size_t num);
+// int memcmp(const void *ptr1, const void *ptr2, size_t num);
 
 /**
  * Copies num bytes from src to dest
@@ -98,7 +100,7 @@ int memcmp(const void *ptr1, const void *ptr2, size_t num);
  *
  * @return           A pointer to dest
  */
-void *memcpy(void *dest, const void *src, size_t num);
+// void *memcpy(void *dest, const void *src, size_t num);
 
 /*
  * Get outgoing message buffer (can be used for sendMessage);
