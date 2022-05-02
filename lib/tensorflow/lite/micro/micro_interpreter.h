@@ -117,7 +117,7 @@ class MicroInterpreter {
   }
 
   TfLiteTensor* input(size_t index);
-  size_t inputs_size() const { return subgraph_->inputs()->Length(); }
+  size_t inputs_size() const { return subgraph_->inputs()->size(); }
   const flatbuffers::Vector<int32_t>& inputs() const {
     return *subgraph_->inputs();
   }
@@ -133,7 +133,7 @@ class MicroInterpreter {
   }
 
   TfLiteTensor* output(size_t index);
-  size_t outputs_size() const { return subgraph_->outputs()->Length(); }
+  size_t outputs_size() const { return subgraph_->outputs()->size(); }
   const flatbuffers::Vector<int32_t>& outputs() const {
     return *subgraph_->outputs();
   }
