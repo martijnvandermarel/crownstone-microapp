@@ -56,7 +56,7 @@ $(INC_DIR)/microapp_target_symbols.ld: $(TARGET_CONFIG_FILE) .tmp.TARGET_CONFIG_
 
 $(INC_DIR)/microapp_symbols.ld: $(INC_DIR)/microapp_symbols.ld.in
 	@echo "Generate linker symbols using C header files (using the compiler)"
-	@$(CC) -CC -E -P -x c -I$(INC_DIR) -I$(LIB_DIR) -I$(TARGET_DIR) $^ -o $@
+	@$(CC) -CC -E -P -x c -I$(INC_DIR) -I$(LIB_DIR) -I$(TARGET_DIR) $^ -o $@ -lstdc++
 	@echo "File $@ now up to date"
 
 $(TARGET).elf.tmp.deps: $(INC_DIR)/microapp_header_dummy_symbols.ld $(INC_DIR)/microapp_symbols.ld $(INC_DIR)/microapp_target_symbols.ld
@@ -64,7 +64,7 @@ $(TARGET).elf.tmp.deps: $(INC_DIR)/microapp_header_dummy_symbols.ld $(INC_DIR)/m
 
 $(TARGET).elf.tmp: $(SOURCE_FILES)
 	@echo "Compile without firmware header"
-	@$(CC) $(FLAGS) $^ -I$(SHARED_PATH) -I$(INC_DIR) -I$(TARGET_DIR) -I$(LIB_DIR) -L$(INC_DIR) -Tgeneric_gcc_nrf52.ld -o $@
+	@$(CC) $(FLAGS) $^ -I$(SHARED_PATH) -I$(INC_DIR) -I$(TARGET_DIR) -I$(LIB_DIR) -L$(INC_DIR) -Tgeneric_gcc_nrf52.ld -o $@ -lstdc++
 
 .ALWAYS:
 $(TARGET).elf.deps: $(INC_DIR)/microapp_header_symbols.ld
@@ -72,7 +72,7 @@ $(TARGET).elf.deps: $(INC_DIR)/microapp_header_symbols.ld
 
 $(TARGET).elf: $(SOURCE_FILES)
 	@echo "Compile with firmware header"
-	@$(CC) $(FLAGS) $^ -I$(SHARED_PATH) -I$(INC_DIR) -I$(TARGET_DIR) -I$(LIB_DIR) -I$(TARGET_DIR) -L$(INC_DIR) -Tgeneric_gcc_nrf52.ld -o $@
+	@$(CC) $(FLAGS) $^ -I$(SHARED_PATH) -I$(INC_DIR) -I$(TARGET_DIR) -I$(LIB_DIR) -I$(TARGET_DIR) -L$(INC_DIR) -Tgeneric_gcc_nrf52.ld -o $@ -lstdc++
 
 $(TARGET).c: $(TARGET_SOURCE)
 	@echo "Script from .ino file to .c file (just adding Arduino.h header)"
