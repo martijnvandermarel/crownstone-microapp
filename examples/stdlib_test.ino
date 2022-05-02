@@ -1,5 +1,5 @@
 //
-// Test to see size of program with std lib or only self-implemented standard functions
+// Test to see size of program with std lib
 //
 
 #include <Arduino.h>
