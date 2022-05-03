@@ -12,28 +12,28 @@
 
 boolean ready = false;
 
-// tflite::MicroErrorReporter tflErrorReporter;
-// const tflite::Model* tflModel = nullptr;
-// tflite::MicroInterpreter* tflInterpreter = nullptr;
-// TfLiteTensor* tflInputTensor = nullptr;
-// TfLiteTensor* tflOutputTensor = nullptr;
+tflite::MicroErrorReporter tflErrorReporter;
+const tflite::Model* tflModel = nullptr;
+tflite::MicroInterpreter* tflInterpreter = nullptr;
+TfLiteTensor* tflInputTensor = nullptr;
+TfLiteTensor* tflOutputTensor = nullptr;
 
 const size_t tensorArenaSize = 40;
 uint8_t tensorArena[tensorArenaSize] __attribute__((aligned(16)));
 
 // tflite::AllOpsResolver tflOpsresolver;
-tflite::MicroMutableOpResolver<5> tflOpsresolver;
+tflite::MicroMutableOpResolver<5> tflOpsresolver(&tflErrorReporter);
 
 
 void setup() {
 	Serial.print("\n\n Tensorflow in microapp: ");
 	Serial.println(TFLITE_VERSION_STRING);
 
-	// tflModel = tflite::GetModel(g_hello_world_model_data);
-	// if (tflModel->version() != TFLITE_SCHEMA_VERSION) {
-	// 	Serial.println("Error: schema mismatch");
-	// 	return;
-	// }
+	tflModel = tflite::GetModel(g_hello_world_model_data);
+	if (tflModel->version() != TFLITE_SCHEMA_VERSION) {
+		Serial.println("Error: schema mismatch");
+		return;
+	}
 
 	if (tflOpsresolver.AddRelu() != kTfLiteOk) {
 		Serial.println("Error: add Relu op");
@@ -56,17 +56,17 @@ void setup() {
 		return;
 	}
 
-	// static tflite::MicroInterpreter static_interpreter(tflModel, tflOpsresolver, tensorArena, tensorArenaSize, &tflErrorReporter, nullptr);
-	// tflInterpreter = &static_interpreter;
-	// tflInterpreter = new tflite::MicroInterpreter(tflModel, tflOpsresolver, tensorArena, tensorArenaSize, &tflErrorReporter);
-	// tflInterpreter->AllocateTensors();
+	static tflite::MicroInterpreter static_interpreter(tflModel, tflOpsresolver, tensorArena, tensorArenaSize, &tflErrorReporter, nullptr);
+	tflInterpreter = &static_interpreter;
+	tflInterpreter = new tflite::MicroInterpreter(tflModel, tflOpsresolver, tensorArena, tensorArenaSize, &tflErrorReporter);
+	tflInterpreter->AllocateTensors();
 
-	// tflInputTensor = tflInterpreter->input(0);
-	// tflOutputTensor = tflInterpreter->output(0);
+	tflInputTensor = tflInterpreter->input(0);
+	tflOutputTensor = tflInterpreter->output(0);
 
-	// int bytesUsed = tflInterpreter->arena_used_bytes();
-	// Serial.print("Bytes used: ");
-	// Serial.println(bytesUsed);
+	int bytesUsed = tflInterpreter->arena_used_bytes();
+	Serial.print("Bytes used: ");
+	Serial.println(bytesUsed);
 
 	ready = true;
 }
@@ -79,11 +79,11 @@ void loop() {
 		return;
 	}
 
-	// TfLiteStatus invokeStatus = tflInterpreter->Invoke();
-	// if (invokeStatus != kTfLiteOk) {
-	// 	Serial.println("Invoke failed");
-	// 	return;
-	// }
+	TfLiteStatus invokeStatus = tflInterpreter->Invoke();
+	if (invokeStatus != kTfLiteOk) {
+		Serial.println("Invoke failed");
+		return;
+	}
 
 	Serial.println(g_hello_world_model_data_size);
 }

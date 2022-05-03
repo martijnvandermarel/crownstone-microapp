@@ -10,11 +10,22 @@ include $(TARGET_CONFIG_FILE)
 include config.mk
 -include private.mk
 
+# TFLM_PATH=$(HOME)/code/tflite-micro
+# TFLM_LIB_PATH=$(TFLM_PATH)/tensorflow/lite/micro/tools/make/gen/cortex_m_generic_cortex-m4_default/lib
+TFLM_DIR=$(SRC_DIR)/tensorflow
+# THIRD_PARTY_DIR=$(SRC_DIR)/third_party
+# C_SRC_DIR=$(shell find $(TFLM_DIR) -name "*.c" \( -path "*/c/*" -o -name "*util.c" \) )
+# C_INC_DIR=$(shell find $(TFLM_DIR) -type d \( -path "*/c/*" -o -path "*/experimental/*" \) )
+# TFLM_SRC_FILES=$(shell find $(TFLM_DIR) -name "*.c" ! -path "*/tools/*" ! -path "*/c/*" ! -name "*util.c") # exclude some directories
+TFLM_SRC_FILES=$(shell find $(TFLM_DIR) -name "*.c" ! -path "*/tools/*") # exclude tools directory
+TFLM_INC_DIRS=$(shell find $(TFLM_DIR) -type d)
+
 SOURCE_FILES=	$(INC_DIR)/startup.S \
 				$(wildcard $(SRC_DIR)/*.c) \
 				$(wildcard $(SRC_DIR)/*.cpp) \
 				$(wildcard $(TARGET_DIR)/*.c) \
 				$(wildcard $(TARGET_DIR)/*.cpp) \
+				$(TFLM_SRC_FILES) \
 				$(SHARED_PATH)/ipc/cs_IpcRamData.c \
 				$(TARGET).c
 
@@ -56,7 +67,8 @@ $(INC_DIR)/microapp_target_symbols.ld: $(TARGET_CONFIG_FILE) .tmp.TARGET_CONFIG_
 
 $(INC_DIR)/microapp_symbols.ld: $(INC_DIR)/microapp_symbols.ld.in
 	@echo "Generate linker symbols using C header files (using the compiler)"
-	@$(CC) -CC -E -P -x c -I$(INC_DIR) -I$(LIB_DIR) -I$(TARGET_DIR) $^ -o $@ -lstdc++
+#	@$(CC) -CC -E -P -x c -I$(INC_DIR) -I$(LIB_DIR) -I$(TARGET_DIR) -ltensorflow-microlite -L$(TFLM_LIB_PATH) $^ -o $@ -lstdc++
+	@$(CC) -CC -E -P -x c -I$(INC_DIR) -I$(LIB_DIR) -I$(TARGET_DIR) -I$(SRC_DIR) $^ -o $@ -lstdc++
 	@echo "File $@ now up to date"
 
 $(TARGET).elf.tmp.deps: $(INC_DIR)/microapp_header_dummy_symbols.ld $(INC_DIR)/microapp_symbols.ld $(INC_DIR)/microapp_target_symbols.ld
@@ -64,7 +76,9 @@ $(TARGET).elf.tmp.deps: $(INC_DIR)/microapp_header_dummy_symbols.ld $(INC_DIR)/m
 
 $(TARGET).elf.tmp: $(SOURCE_FILES)
 	@echo "Compile without firmware header"
-	@$(CC) $(FLAGS) $^ -I$(SHARED_PATH) -I$(INC_DIR) -I$(TARGET_DIR) -I$(LIB_DIR) -L$(INC_DIR) -Tgeneric_gcc_nrf52.ld -o $@ -lstdc++
+#	@$(CC) -x c -I$(C_INC_DIR) -Tgeneric_gcc_nrf52.ld -o $@
+#	@$(CC) $(FLAGS) $^ -I$(SHARED_PATH) -I$(INC_DIR) -I$(TARGET_DIR) -I$(LIB_DIR) -I$(TFLM_LIB_PATH) -ltensorflow-microlite -L$(TFLM_LIB_PATH)  -L$(INC_DIR) -Tgeneric_gcc_nrf52.ld -o $@ -lstdc++
+	@$(CC) $(FLAGS) $^ -I$(SHARED_PATH) -I$(INC_DIR) -I$(TARGET_DIR) -I$(SRC_DIR) -L$(INC_DIR) -L$(SRC_DIR) -Tgeneric_gcc_nrf52.ld -o $@ -lstdc++
 
 .ALWAYS:
 $(TARGET).elf.deps: $(INC_DIR)/microapp_header_symbols.ld
@@ -72,7 +86,9 @@ $(TARGET).elf.deps: $(INC_DIR)/microapp_header_symbols.ld
 
 $(TARGET).elf: $(SOURCE_FILES)
 	@echo "Compile with firmware header"
-	@$(CC) $(FLAGS) $^ -I$(SHARED_PATH) -I$(INC_DIR) -I$(TARGET_DIR) -I$(LIB_DIR) -I$(TARGET_DIR) -L$(INC_DIR) -Tgeneric_gcc_nrf52.ld -o $@ -lstdc++
+#	@$(CC) -x c -I$(C_INC_DIR) -Tgeneric_gcc_nrf52.ld -o $@
+#	@$(CC) $(FLAGS) $^ -I$(SHARED_PATH) -I$(INC_DIR) -I$(TARGET_DIR) -I$(LIB_DIR) -I$(TFLM_LIB_PATH) -ltensorflow-microlite -L$(TFLM_LIB_PATH) -L$(INC_DIR) -Tgeneric_gcc_nrf52.ld -o $@ -lstdc++
+	@$(CC) $(FLAGS) $^ -I$(SHARED_PATH) -I$(INC_DIR) -I$(TARGET_DIR) -I$(SRC_DIR) -L$(INC_DIR) -L$(SRC_DIR) -Tgeneric_gcc_nrf52.ld -o $@ -lstdc++
 
 $(TARGET).c: $(TARGET_SOURCE)
 	@echo "Script from .ino file to .c file (just adding Arduino.h header)"
@@ -145,6 +161,5 @@ help:
 
 .SILENT: all init flash inspect size help read reset erase clean
 
-print: $(wildcard $(TARGET_DIR)/*.cpp)
-	@echo "print .c files in $(TARGET_DIR):"
-	@ls $?
+print: $(SOURCE_FILES)
+	@echo $(SOURCE_FILES)

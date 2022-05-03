@@ -59,6 +59,6 @@ FLAGS=-std=c++17 -mthumb -ffunction-sections -fdata-sections -Wall -Werror \
 	  -Wl,--gc-sections -Wl,-eReset_Handler \
 	  -g \
 	  -Wno-error=unused-function -Os -fomit-frame-pointer -Wl,-z,nocopyreloc --specs=nano.specs \
-	  -mcpu=cortex-m4 -mfloat-abi=hard -mfpu=fpv4-sp-d16 -u _printf_float
+	  -mcpu=cortex-m4 -mfloat-abi=soft -mfpu=fpv4-sp-d16 -u _printf_float
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
