@@ -1,7 +1,5 @@
 #include <Arduino.h>
 
-#include <tensorflow/lite/version.h>
-
 // #include <tensorflow/lite/micro/all_ops_resolver.h>
 #include <tensorflow/lite/micro/micro_mutable_op_resolver.h>
 #include <tensorflow/lite/micro/micro_interpreter.h>
@@ -18,7 +16,7 @@ tflite::MicroInterpreter* tflInterpreter = nullptr;
 TfLiteTensor* tflInputTensor = nullptr;
 TfLiteTensor* tflOutputTensor = nullptr;
 
-const size_t tensorArenaSize = 40;
+const size_t tensorArenaSize = 4;
 uint8_t tensorArena[tensorArenaSize] __attribute__((aligned(16)));
 
 // tflite::AllOpsResolver tflOpsresolver;
@@ -27,7 +25,6 @@ tflite::MicroMutableOpResolver<5> tflOpsresolver(&tflErrorReporter);
 
 void setup() {
 	Serial.print("\n\n Tensorflow in microapp: ");
-	Serial.println(TFLITE_VERSION_STRING);
 
 	tflModel = tflite::GetModel(g_hello_world_model_data);
 	if (tflModel->version() != TFLITE_SCHEMA_VERSION) {

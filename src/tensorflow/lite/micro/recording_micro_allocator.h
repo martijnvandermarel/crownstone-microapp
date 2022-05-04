@@ -16,9 +16,9 @@ limitations under the License.
 #ifndef TENSORFLOW_LITE_MICRO_RECORDING_MICRO_ALLOCATOR_H_
 #define TENSORFLOW_LITE_MICRO_RECORDING_MICRO_ALLOCATOR_H_
 
+#include "tensorflow/lite/micro/arena_allocator/recording_simple_memory_allocator.h"
 #include "tensorflow/lite/micro/compatibility.h"
 #include "tensorflow/lite/micro/micro_allocator.h"
-#include "tensorflow/lite/micro/recording_simple_memory_allocator.h"
 
 namespace tflite {
 
@@ -58,6 +58,9 @@ class RecordingMicroAllocator : public MicroAllocator {
                                          size_t arena_size,
                                          ErrorReporter* error_reporter);
 
+  // Returns the fixed amount of memory overhead of RecordingMicroAllocator.
+  static size_t GetDefaultTailUsage();
+
   // Returns the recorded allocations information for a given allocation type.
   RecordedAllocation GetRecordedAllocation(
       RecordedAllocationType allocation_type) const;
@@ -72,31 +75,27 @@ class RecordingMicroAllocator : public MicroAllocator {
 
  protected:
   TfLiteStatus AllocateNodeAndRegistrations(
-      const Model* model,
-      NodeAndRegistration** node_and_registrations) override;
-  TfLiteStatus PrepareNodeAndRegistrationDataFromFlatbuffer(
-      const Model* model, const MicroOpResolver& op_resolver,
-      NodeAndRegistration* node_and_registrations) override;
+      const Model* model, SubgraphAllocations* subgraph_allocations) override;
   TfLiteStatus AllocateTfLiteEvalTensors(
-      const Model* model, TfLiteEvalTensor** eval_tensors) override;
+      const Model* model, SubgraphAllocations* subgraph_allocations) override;
   TfLiteStatus AllocateVariables(const SubGraph* subgraph,
                                  TfLiteEvalTensor* eval_tensors) override;
   // TODO(b/162311891): Once all kernels have been updated to the new API drop
   // this method. It is only used to record TfLiteTensor persistent allocations.
-  TfLiteTensor* AllocatePersistentTfLiteTensorInternal(
-      const Model* model, TfLiteEvalTensor* eval_tensors,
-      int tensor_index) override;
+  TfLiteTensor* AllocatePersistentTfLiteTensorInternal() override;
+
   // TODO(b/162311891): Once all kernels have been updated to the new API drop
   // this function since all allocations for quantized data will take place in
   // the temp section.
   TfLiteStatus PopulateTfLiteTensorFromFlatbuffer(const Model* model,
-                                                  const SubGraph* subgraph,
                                                   TfLiteTensor* tensor,
                                                   int tensor_index,
+                                                  int subgraph_index,
                                                   bool allocate_temp) override;
 
  private:
   RecordingMicroAllocator(RecordingSimpleMemoryAllocator* memory_allocator,
+                          MicroMemoryPlanner* memory_planner,
                           ErrorReporter* error_reporter);
 
   void PrintRecordedAllocation(RecordedAllocationType allocation_type,
@@ -115,6 +114,8 @@ class RecordingMicroAllocator : public MicroAllocator {
   RecordedAllocation recorded_persistent_buffer_data_ = {};
   RecordedAllocation recorded_tflite_tensor_variable_buffer_data_ = {};
   RecordedAllocation recorded_node_and_registration_array_data_ = {};
+
+  // TODO(b/187993291): Re-enable OpData allocating tracking.
   RecordedAllocation recorded_op_data_ = {};
 
   TF_LITE_REMOVE_VIRTUAL_DELETE
