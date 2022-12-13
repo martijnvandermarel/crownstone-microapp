@@ -329,6 +329,11 @@ microapp_sdk_result_t handleInterrupt(microapp_sdk_header_t* interruptHeader) {
 			id                  = eventInterrupt->type;
 			break;
 		}
+		case CS_MICROAPP_SDK_TYPE_ASSETS: {
+			auto assetInterrupt = reinterpret_cast<microapp_sdk_asset_t*>(interruptHeader);
+			id                  = assetInterrupt->type;
+			break;
+		}
 		default: {
 			return CS_MICROAPP_SDK_ACK_ERR_UNDEFINED;
 		}
