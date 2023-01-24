@@ -19,18 +19,6 @@ uint8_t meshReceiverId = 0;
 uint8_t meshPayloadSize = 0;
 
 bool sendMeshFlag = false;
-bool sendUartFlag = false;
-
-void onMeshMessage(MeshMsg msg) {
-	if (msg.size > MAX_MICROAPP_MESH_PAYLOAD_SIZE) {
-		msg.size = MAX_MICROAPP_MESH_PAYLOAD_SIZE;
-	}
-	uartMsgBuf[0] = MICROAPP_MESSAGE_MESH_FORWARD_OPCODE;
-	uartMsgBuf[1] = msg.stoneId;
-	memcpy(uartMsgBuf + 2, msg.dataPtr, msg.size);
-	uartPayloadSize = msg.size + 2;
-	sendUartFlag = true;
-}
 
 void onUartMessage(uint8_t* data, microapp_size_t size) {
 	uint8_t opcode = data[0];
@@ -58,23 +46,28 @@ void setup() {
 	if (!Mesh.listen()) {
 		Serial.println("Mesh.listen() failed");
 	}
-	Mesh.setIncomingMeshMsgHandler(onMeshMessage);
-
 }
 
 void loop() {
+	while (Mesh.available()) {
+		MeshMsg msg;
+		Mesh.readMeshMsg(&msg);
+		if (msg.size > MAX_MICROAPP_MESH_PAYLOAD_SIZE) {
+			msg.size = MAX_MICROAPP_MESH_PAYLOAD_SIZE;
+		}
+		uartMsgBuf[0] = MICROAPP_MESSAGE_MESH_FORWARD_OPCODE;
+		uartMsgBuf[1] = msg.stoneId;
+		memcpy(uartMsgBuf + 2, msg.dataPtr, msg.size);
+		uartPayloadSize = msg.size + 2;
+		// Serial.println("Sending message over uart");
+		// Serial.println(uartMsgBuf, uartPayloadSize);
+		Message.write(uartMsgBuf, uartPayloadSize);
+	}
 	if (sendMeshFlag) {
-		Serial.print("Sending message over mesh to ");
-		Serial.println(meshReceiverId);
-		Serial.println(meshMsgBuf, meshPayloadSize);
+		// Serial.print("Sending message over mesh to ");
+		// Serial.println(meshReceiverId);
+		// Serial.println(meshMsgBuf, meshPayloadSize);
 		Mesh.sendMeshMsg(meshMsgBuf, meshPayloadSize, meshReceiverId);
 		sendMeshFlag = false;
 	}
-	if (sendUartFlag) {
-		Serial.println("Sending message over uart");
-		Serial.println(uartMsgBuf, uartPayloadSize);
-		Message.write(uartMsgBuf, uartPayloadSize);
-		sendUartFlag = false;
-	}
-
 }

@@ -2,7 +2,7 @@
 
 #include <microapp.h>
 
-#define MESH_MSG_BUFFER_LEN 2
+#define MESH_MSG_BUFFER_LEN 5
 
 struct MeshMsgBufferEntry {
 	bool filled = false;
